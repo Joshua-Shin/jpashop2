@@ -10,17 +10,49 @@
 - @RequestBody : 요청으로 들어오는 JSON을 해당 에노테이션을 붙여준 객체 파라미터에 변환해서 바인딩 시켜줌.
 - @ResponseBody : 클래스나 메소드레벨에 선언. 응답으로 나가는 객체를 JSON 형식으로 잘 만들어서 응답 보내줌.
 - @RestController : @Responsbody + @Controller. 어차피 api만을 대응하기 위한 클래스들이니까 클래스레벨에 해당 에노테이션을 선언.
-- 요청 받는 객체와 응답으로 나가는 객체를 엔티티 객체로 사용하지 마라!
+- 요청 받는 객체와 응답으로 나가는 객체를 엔티티 객체로 사용하지 마라! 추천이 아니라 강제야! (요청편)
   - 요청으로 받는 객체는 DTO(Data Transfer Object)를 따로 정의해서 그걸로 받아주는게 좋아. 왜?
     - 만약 엔티티 그대로 요청을 받는다. 치면 요청때마다 필드 검증하는 사항들이 다를 수 있는데 이를 @Valid로 대응하기가 어려움. 어떤 메소드는 name이 필수고 어떤 메소드는 age가 필수 인데 어디다가 @NotEmpty를 붙일거야
     - 엔티티의 필드명을 수정한다 치면, 클라쪽에서 들어오는 json의 필드명도 수정해야됨...
     - 클라쪽에서 어떤 필드들을 보내온것인지 파악하기 힘들어.
     - 따라서, 딱 필요한 필드값들만 fit하게 받아오는 그에 맞는 DTO 객체를 따로 정의해서 그걸로 받아주면, 엔티티 처럼 필드명 수정할 일도 없고, Valid도 요청에 맞춰 딱딱 걸어주고, 요청으로 들어온 필드가 무엇인지도 딱 보기좋고.
     - API가 아니더라도 그 화면 뿌리는상황에서도 form 객체로 요청 받았잖아. 똑같애 이것도.
-  - 응답으로 나가는 객체도 엔티티 그대로 사용하지 않는데, 이것도 엔티티 필드명 수정이나, 보안이나 뭐 그런거 때문일듯.
 
 #### 회원 수정 API
+- 수정도 등록과 다른 DTO 만들어서 그걸로 요청 파라미터 받아줌.
+- DTO를 외부 클래스로 정의하는게 아니라, 해당 api컨트롤러 클래스 내에 static class로 정의해주네.
+- 엔티티 객체에는 롬복에서 @Getter만 되도록 쓰는데, DTO는 일단 @DATA 박고, @AllArgu도 박고 좀 편하게 롬복사용.
+
 #### 회원 조회 API
+- 요청 받는 객체와 응답으로 나가는 객체를 엔티티 객체로 사용하지 마라! 추천이 아니라 강제야! (응답편)
+  - 엔티티의 필드명이 바뀌면, api 스펙 자체가 달라지는거나 다름없어.
+  - 모든 값이 노출되기때문에 보안상으로도 안좋고.
+  - api 용도가 다 다른데 하나의 엔티티에서 어떤 api 에는 필드A가 노출 안되게하고 어떤 api에는 필드A가 필요하고, 이런걸 다 대응할 수가 없어.
+- 전체 회원 조회 같이 List 배열이 나가야 할 경우, 이때도 List<MemberDto>로 반환하는게 아니라 List<MemberDto> 타입의 필드를 가지고 있는 객체로 반환해줘야돼.
+  - 그래야 json이 배열 형태 [ ] 가 아니라 Object 형태 { } 로 나갈 수 있음
+    - 그래야 해당 json에 count 필드라든가 새로운 필드값을 추가해서 보낼 수 있지. 그냥 배열 형태로 보내버리면 유연성이 확 떨어지게됨.
+  - 예시
+  ```
+  @GetMapping("/api/v2/members")
+  public Result membersV2() {
+      List<Member> findMembers = memberService.findMembers(); 
+      //엔티티 -> DTO 변환
+      List<MemberDto> collect = findMembers.stream()
+                  .map(m -> new MemberDto(m.getName()))
+                  .collect(Collectors.toList());
+      return new Result(collect);
+  }
+  @Data
+  @AllArgsConstructor
+  static class Result<T> {
+      private T data;
+  }
+  @Data
+  @AllArgsConstructor
+  static class MemberDto {
+      private String name;
+  }
+  ```
 
 ### API 개발 고급 - 준비
 #### API 개발 고급 소개

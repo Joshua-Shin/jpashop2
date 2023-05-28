@@ -33,26 +33,26 @@
   - 그래야 json이 배열 형태 [ ] 가 아니라 Object 형태 { } 로 나갈 수 있음
     - 그래야 해당 json에 count 필드라든가 새로운 필드값을 추가해서 보낼 수 있지. 그냥 배열 형태로 보내버리면 유연성이 확 떨어지게됨.
   - 예시
-  ```
-  @GetMapping("/api/v2/members")
-  public Result membersV2() {
-      List<Member> findMembers = memberService.findMembers(); 
-      //엔티티 -> DTO 변환
-      List<MemberDto> collect = findMembers.stream()
-                  .map(m -> new MemberDto(m.getName()))
-                  .collect(Collectors.toList());
-      return new Result(collect);
-  }
-  @Data
-  @AllArgsConstructor
-  static class Result<T> {
-      private T data;
-  }
-  @Data
-  @AllArgsConstructor
-  static class MemberDto {
-      private String name;
-  }
+```
+@GetMapping("/api/v2/members")
+public Result membersV2() {
+    List<Member> findMembers = memberService.findMembers(); 
+    //엔티티 -> DTO 변환
+    List<MemberDto> collect = findMembers.stream()
+                .map(m -> new MemberDto(m.getName()))
+                .collect(Collectors.toList());
+    return new Result(collect);
+}
+@Data
+@AllArgsConstructor
+static class Result<T> {
+    private T data;
+}
+@Data
+@AllArgsConstructor
+static class MemberDto {
+    private String name;
+}
   ```
 
 ### API 개발 고급 - 준비
